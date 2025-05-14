@@ -62,6 +62,7 @@ public class AuthserviceApplication {
         http
                 // Apply security matcher to only handle authorization server endpoints
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+
                 // Apply the OAuth2 Authorization Server config
                 .with(authorizationServerConfigurer, authorizationServer -> authorizationServer
                         .tokenRevocationEndpoint(Customizer.withDefaults())
@@ -98,14 +99,16 @@ public class AuthserviceApplication {
         return new InMemoryUserDetailsManager(user);
     }
 
+    //ska skrivas om för att spara client-id och secret i en databas
     @Bean
-    public RegisteredClientRepository registeredClientRepository() {
+    public RegisteredClientRepository registeredClientRepository(PasswordEncoder encoder) {
         RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("oidc-client") //client credential
-                .clientSecret("{noop}secret") //client credential
+                .clientId("client-id") //client credential
+                .clientSecret(encoder.encode("secret")) //client credential
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
                 .postLogoutRedirectUri("http://127.0.0.1:8080/")
                 .scope("read_resource")
@@ -130,6 +133,8 @@ public class AuthserviceApplication {
         return new ImmutableJWKSet<>(jwkSet);
     }
 
+
+    //utöka denna metod för att kunna spara keypair i en databas, ska vara superduperhemlig
     private static KeyPair generateRsaKey() {
         KeyPair keyPair;
         try {
