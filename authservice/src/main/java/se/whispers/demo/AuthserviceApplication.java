@@ -86,7 +86,16 @@ public class AuthserviceApplication {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorize ->
                         authorize.anyRequest().authenticated())
-                .formLogin(Customizer.withDefaults());
+                .formLogin(Customizer.withDefaults())
+                .rememberMe(remember -> remember
+                        .tokenValiditySeconds(60 * 60 * 24 * 7) // 7 days
+                        .key("supersecretkey")
+                        .rememberMeParameter("remember-me"))
+                .logout(logout -> logout.deleteCookies("JSESSIONID"))
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                        .maxSessionsPreventsLogin(false));
+
         return http.build();
     }
 
@@ -114,7 +123,7 @@ public class AuthserviceApplication {
                 .scope("read_resource")
                 .clientSettings(ClientSettings.builder()
                         .requireAuthorizationConsent(true)
-                .build())
+                        .build())
                 .build();
 
         return new InMemoryRegisteredClientRepository(oidcClient);
@@ -141,8 +150,7 @@ public class AuthserviceApplication {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
             keyPairGenerator.initialize(2048);
             keyPair = keyPairGenerator.generateKeyPair();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
         return keyPair;
