@@ -11,3 +11,9 @@ spring:
               - Path=/api/**
             filters:
               - RewritePath=/api/?(?<segment>.*), /$\{segment}
+          - id: joke-route
+            uri: http://jokeservice:8081/
+            predicates:
+              - Path=/jokes/**
+            filters:
+              - RewritePath=/jokes/?(?<segment>.*), /$\{segment}

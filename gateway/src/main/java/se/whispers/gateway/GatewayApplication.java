@@ -17,12 +17,16 @@ public class GatewayApplication {
         SpringApplication.run(GatewayApplication.class, args);
     }
 
-//    @Bean
-//    RouterFunction<ServerResponse> routes() {
-//        return RouterFunctions.route()
-//                .GET("/api/get", HandlerFunctions.http()) //creates a GET endpoint and uses HandlerFunctions.http() to forward request to downstream services
-//                .before(BeforeFilterFunctions.uri("http://example.org")) //sets the URI to forward requests to
-//                .build();
-//    }
+    @Bean
+    RouterFunction<ServerResponse> routes() {
+        return RouterFunctions.route()
+                // Resource Server routes
+                .GET("/api/**", HandlerFunctions.http())
+                .before(BeforeFilterFunctions.uri("http://resourceserver:8080"))
+                // Joke Service routes
+                .GET("/jokes/**", HandlerFunctions.http())
+                .before(BeforeFilterFunctions.uri("http://jokeservice:8081"))
+                .build();
+    }
 
 }

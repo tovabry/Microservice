@@ -1,9 +1,8 @@
-package se.whispers.resourceserver;
+package se.whispers.jokeservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -11,10 +10,11 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @SpringBootApplication
-public class ResourceserverApplication {
+public class JokeserviceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ResourceserverApplication.class, args);
+        SpringApplication.run(JokeserviceApplication.class, args);
+
     }
 
 
@@ -32,7 +32,7 @@ public class ResourceserverApplication {
 //        return http.build();
 //    }
 
-        @Bean
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .csrf(csrf -> csrf.disable());
@@ -54,5 +54,6 @@ public class ResourceserverApplication {
         source.registerCorsConfiguration("/**", configurationSource);
         return source;
     }
+
 
 }
