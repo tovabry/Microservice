@@ -18,26 +18,26 @@ public class ResourceserverApplication {
     }
 
 
-//    @Bean
-//    SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
-//        http
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource)) //enable CORS
-//                .authorizeHttpRequests(authorize -> authorize
-//                        .requestMatchers("/public").permitAll()
-//                        .requestMatchers("/private").hasAuthority("SCOPE_read_resource")
-//                        .anyRequest().authenticated()
-//                )
-//                //turn on resource server that looks for JWT tokens, with default configuration
-//                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-//        return http.build();
-//    }
-
-        @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable());
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource)) //enable CORS
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/public").permitAll()
+                        .requestMatchers("/private").hasAuthority("SCOPE_read_resource")
+                        .anyRequest().authenticated()
+                )
+                //turn on resource server that looks for JWT tokens, with default configuration
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();
     }
+
+//        @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+//                .csrf(csrf -> csrf.disable());
+//        return http.build();
+//    }
 
 
     @Bean
