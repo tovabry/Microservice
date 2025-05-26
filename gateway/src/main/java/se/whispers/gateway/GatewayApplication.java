@@ -25,7 +25,10 @@ public class GatewayApplication {
                 .before(BeforeFilterFunctions.uri("http://resourceserver:8080"))
                 // Joke Service routes
                 .GET("/jokes/**", HandlerFunctions.http())
-                .before(BeforeFilterFunctions.uri("http://jokeservice:8081"))
+                .before(BeforeFilterFunctions.uri("http://jokeservice:8082"))
+                // Quote Service routes
+                .GET("/quotes/**", HandlerFunctions.http())
+                .before(BeforeFilterFunctions.uri("http://quoteservice:8083"))
                 .build();
     }
 
