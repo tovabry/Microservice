@@ -5,18 +5,13 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.aot.generate.AccessControl;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -36,7 +31,6 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -61,15 +55,32 @@ public class AuthserviceApplication {
     }
 
     @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+                "http://localhost:8080",  //gateway
+                "http://localhost:7000"   //frontend
+        ));
+        config.setAllowedMethods(List.of("GET", "POST"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/oauth2/**", config);
+        source.registerCorsConfiguration("/login", config);
+        return source;
+    }
+
+    @Bean
     @Order(1)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 OAuth2AuthorizationServerConfigurer.authorizationServer();
 
         http
                 // Apply security matcher to only handle authorization server endpoints
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 // Apply the OAuth2 Authorization Server config
                 .with(authorizationServerConfigurer, authorizationServer -> authorizationServer
                         .tokenRevocationEndpoint(Customizer.withDefaults())
@@ -84,24 +95,20 @@ public class AuthserviceApplication {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
                 );
-
         return http.build();
     }
 
+
     @Bean
     @Order(2)
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorize ->
-                        authorize.anyRequest().authenticated())
-                .formLogin(Customizer.withDefaults())
-                .rememberMe(remember -> remember
-                        .tokenValiditySeconds(60 * 60 * 24 * 7) // 7 days
-                        .key("supersecretkey")
-                        .rememberMeParameter("remember-me"))
-                .logout(logout -> logout.deleteCookies("JSESSIONID"))
-                .sessionManagement(session -> session
-                        .maximumSessions(1)
-                        .maxSessionsPreventsLogin(false));
+    SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                            CorsConfigurationSource corsConfigurationSource) throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .authorizeHttpRequests(authorize ->
+                        authorize.anyRequest().authenticated()
+                )
+                .formLogin(Customizer.withDefaults());
 
         return http.build();
     }
@@ -118,6 +125,21 @@ public class AuthserviceApplication {
     //ska skrivas om för att spara client-id och secret i en databas
     @Bean
     public RegisteredClientRepository registeredClientRepository(PasswordEncoder encoder) {
+        RegisteredClient spaClient = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("spa-client-id") // Matches CLIENT_ID in app.js
+                // .clientSecret(encoder.encode("spa-secret")) // REMOVE for public client
+                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE) // SET for public client
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                //.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN) // REMOVE for public client
+                .redirectUri("http://localhost:7000/callback.html") // Matches REDIRECT_URI in app.js
+                .scope(OidcScopes.OPENID)
+                .scope("read_resource")
+                .clientSettings(ClientSettings.builder()
+                        .requireProofKey(true) // PKCE is required and enforced
+                        .requireAuthorizationConsent(false)
+                        .build())
+                .build();
+
         RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("client-id") //client credential
                 .clientSecret(encoder.encode("secret")) //client credential
@@ -133,7 +155,7 @@ public class AuthserviceApplication {
                         .build())
                 .build();
 
-        return new InMemoryRegisteredClientRepository(oidcClient);
+        return new InMemoryRegisteredClientRepository(oidcClient, spaClient);
     }
 
     @Bean
