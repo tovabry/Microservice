@@ -1,13 +1,11 @@
 package se.whispers.jokeservice;
 
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/jokes")
 public class JokeController {
 
     private final List<String> privateJokes = List.of(
@@ -16,14 +14,9 @@ public class JokeController {
                     "A dove flew in to a restaurant and asked 'Do you scramble eggs here? The waiter said 'Yes actually, we do.' The dove said 'Great, I was looking for a place to have my abortion.'"
                     );
 
-    @GetMapping("/private")
-    public String getPrivateJoke() {
+    @GetMapping("/random")
+    public String getPrivateQuote() {
         int randomIndex = (int) (Math.random() * privateJokes.size());
         return privateJokes.get(randomIndex);
-    }
-
-    @GetMapping("/public")
-    public String getPublicJoke() {
-        return "A child walked in to a bar and tried to order a beer. The bartender said 'Sorry kid, you're too young to drink.' The child replied 'That's okay, I'm an undercover cop. I just wanted to see if you would serve me.' The bartender smiled and said 'Haha, that's smart, here's your beer!'";
     }
 }

@@ -22,8 +22,7 @@ public class QuoteserviceApplication {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource)) //enable CORS
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("quotes/public").permitAll()
-                        .requestMatchers("quotes/private").hasAuthority("SCOPE_read_resource")
+                        .requestMatchers("quotes/random").hasAuthority("SCOPE_read_resource")
                         .anyRequest().authenticated()
                 )
                 //turn on resource server that looks for JWT tokens, with default configuration
