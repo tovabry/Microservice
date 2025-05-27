@@ -1,25 +1,20 @@
 spring:
   application:
     name: gateway
+gatew
   cloud:
     gateway:
       mvc:
         routes:
-          - id: example-route
-            uri: http://resourceserver:8080/
-            predicates:
-              - Path=/api/**
-            filters:
-              - RewritePath=/api/?(?<segment>.*), /$\{segment}
           - id: joke-route
             uri: http://jokeservice:8082/
             predicates:
-              - Path=/jokes/**
+              - Path=/api/jokes/**
             filters:
-              - RewritePath=/jokes/?(?<segment>.*), /$\{segment}
+              - RewritePath=/api/jokes/?(?<segment>.*), /$\{segment}
           - id: quote-route
             uri: http://quoteservice:8083/
             predicates:
-              - Path=/quotes/**
+              - Path=/api/quotes/**
             filters:
-              - RewritePath=/quotes/?(?<segment>.*), /$\{segment}
+              - RewritePath=/api/quotes/?(?<segment>.*), /$\{segment}
