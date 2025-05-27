@@ -5,16 +5,40 @@ services:
       - "8080:8081"
     networks:
       - microservices-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
 
-  resourceserver:
-    image: resourceserver:0.0.1-SNAPSHOT
+  spa:
+    image: spa:0.0.1-SNAPSHOT
+    ports:
+      - "7000:7000"
     networks:
       - microservices-network
+    environment:
       - SPRING_PROFILES_ACTIVE=docker
+
   auth:
     image: authservice:0.0.1-SNAPSHOT
     ports:
       - "9000:9000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - microservices-network
+
+  jokeservice:
+    image: jokeservice:0.0.1-SNAPSHOT
+    networks:
+      - microservices-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  quoteservice:
+    image: quoteservice:0.0.1-SNAPSHOT
+    networks:
+      - microservices-network
+    environment:
+        - SPRING_PROFILES_ACTIVE=docker
 
 networks:
   microservices-network:
