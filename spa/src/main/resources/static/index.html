@@ -13,11 +13,12 @@
 <body>
 <h1>SPA OAuth2 PKCE Client</h1>
 
-<button id="loginButton">Login with Auth Server</button>
-<!--<button id="callApiButton" style="display:none;">Call Quotes API</button>-->
-<button id="callQuote" style="display:none;">Get Quote</button>
-<button id="callJoke" style="display:none;">Get Joke</button>
-<button id="logoutButton" style="display:none;">Logout (Clear Tokens)</button>
+<div class="buttons">
+    <button id="loginButton">Login with Auth Server</button>
+    <button id="callQuote" style="display:none;">Get quote</button>
+    <button id="callJoke" style="display:none;">Get joke</button>
+    <button id="logoutButton" style="display:none;">Logout</button>
+</div>
 
 <h2>Status:</h2>
 <pre id="status">Not logged in.</pre>

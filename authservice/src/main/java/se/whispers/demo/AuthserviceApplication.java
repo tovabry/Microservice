@@ -202,7 +202,7 @@ public class AuthserviceApplication {
     @Profile("docker")
     public AuthorizationServerSettings authorizationServerSettingsDocker() {
         return AuthorizationServerSettings.builder()
-                .issuer("http://auth:9000")
+                .issuer("http://authservice:9000")
                 .build();
     }
 

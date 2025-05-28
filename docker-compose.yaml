@@ -18,6 +18,7 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
 
   auth:
+    container_name: authservice
     image: authservice:0.0.1-SNAPSHOT
     ports:
       - "9000:9000"

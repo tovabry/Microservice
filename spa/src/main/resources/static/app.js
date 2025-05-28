@@ -1,10 +1,10 @@
 const AUTH_SERVER_URL = 'http://localhost:9000';
-const RESOURCE_SERVER_URL = 'http://localhost:8080'; // Your resource server
-const CLIENT_ID = 'spa-client-id'; // Must match the client ID in Spring Boot
-const REDIRECT_URI = 'http://localhost:7000/callback.html'; // SPA's callback
-const SCOPES = 'openid read_resource'; // Request 'openid' for ID token, 'read_resource' for your API
+const CLIENT_ID = 'spa-client-id';
+const REDIRECT_URI = 'http://localhost:7000/callback.html';
+const GATEWAY_URL = 'http://localhost:8080';
 
-// Helper function to generate a random string for code_verifier and state
+const SCOPES = 'openid read_resource';
+
 function generateRandomString(length) {
     let text = "";
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
@@ -14,7 +14,6 @@ function generateRandomString(length) {
     return text;
 }
 
-// Helper function to generate PKCE code challenge
 async function generateCodeChallenge(codeVerifier) {
     const encoder = new TextEncoder();
     const data = encoder.encode(codeVerifier);
@@ -27,33 +26,20 @@ function base64UrlEncode(arrayBuffer) {
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// --- DOM Elements (for index.html) ---
 const loginButton = document.getElementById('loginButton');
-const callApiButton = document.getElementById('callApiButton');
 const logoutButton = document.getElementById('logoutButton');
 const statusEl = document.getElementById('status');
 const accessTokenEl = document.getElementById('accessToken');
 const apiResponseEl = document.getElementById('apiResponse');
 
-// --- Main Logic ---
-
-if (loginButton) { // Only run this part on index.html
+if (loginButton) {
     loginButton.addEventListener('click', redirectToLogin);
-}
-if (callApiButton) {
-    callApiButton.addEventListener('click', callApi);
 }
 if (logoutButton) {
     logoutButton.addEventListener('click', logout);
 }
 
-// Check login status on page load (for index.html)
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
-        updateUI();
-    }
-});
-
+document.addEventListener('DOMContentLoaded', updateUI); //always run updateUI on page load
 
 async function redirectToLogin() {
     const codeVerifier = generateRandomString(64);
@@ -94,16 +80,13 @@ async function handleCallback() {
     if (receivedState !== storedState) {
         statusEl.textContent = 'Error: State mismatch. Possible CSRF attack.';
         console.error('State mismatch.');
-        // Clear sensitive items just in case
         sessionStorage.removeItem('oauth_state');
         sessionStorage.removeItem('pkce_code_verifier');
         return;
     }
 
-    // Clean up stored items
     sessionStorage.removeItem('oauth_state');
     sessionStorage.removeItem('pkce_code_verifier');
-
 
     try {
         const tokenResponse = await fetch(`${AUTH_SERVER_URL}/oauth2/token`, {
@@ -134,109 +117,98 @@ async function handleCallback() {
             localStorage.setItem('id_token', tokenData.id_token);
         }
 
-        // Redirect back to the main page (index.html)
-        window.location.href = '/index.html'; // Or just '/' if your server serves index.html at root
+        window.location.href = '/index.html';
 
     } catch (error) {
         console.error('Error exchanging code for token:', error);
-        if (document.body) { // callback.html context
+        if (document.body) {
             document.body.innerHTML = `<p>Error during login: ${error.message}. <a href="/index.html">Go back</a></p>`;
-        } else if (statusEl) { // index.html context (though less likely to hit here for token exchange error)
+        } else if (statusEl) {
             statusEl.textContent = `Error during login: ${error.message}`;
         }
     }
 }
 
-async function callApi() {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-        statusEl.textContent = 'Not logged in. Please login first.';
-        apiResponseEl.textContent = 'N/A';
-        return;
+function getAccessToken() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        console.error('No access token found');
+        return null;
     }
+    return token;
+}
 
+async function getQuote() {
     try {
-        const response = await fetch(`${RESOURCE_SERVER_URL}/secure`, {
+        const response = await fetch('http://localhost:8080/api/quotes/random', {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${accessToken}`
+                'Authorization': 'Bearer ' + getAccessToken()
             }
         });
-
-        if (response.status === 401) { // Unauthorized, token might be expired
-            statusEl.textContent = 'Access token might be expired or invalid. Try logging in again.';
-            apiResponseEl.textContent = 'Unauthorized (401)';
-            // Potentially implement refresh token logic here if you have it
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`API call failed: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.text(); // Or response.json() if it returns JSON
-        apiResponseEl.textContent = data;
-        statusEl.textContent = 'API call successful.';
-
+        if (!response.ok) throw new Error('Quote request failed');
+        const quote = await response.text();
+        apiResponseEl.textContent = quote;
     } catch (error) {
-        console.error('Error calling API:', error);
-        apiResponseEl.textContent = `Error: ${error.message}`;
-        statusEl.textContent = 'API call failed.';
+        apiResponseEl.textContent = 'Error: ' + error.message;
     }
 }
+
+async function getJoke() {
+    try {
+        const response = await fetch(`http://localhost:8080/api/jokes/random`, {
+            headers: {
+                'Authorization': 'Bearer ' + getAccessToken()
+            }
+        });
+        if (!response.ok) throw new Error('Joke request failed');
+        const joke = await response.text();
+        apiResponseEl.textContent = joke;
+    } catch (error) {
+        apiResponseEl.textContent = 'Error: ' + error.message;
+    }
+}
+
+document.getElementById('callQuote').addEventListener('click', getQuote);
+document.getElementById('callJoke').addEventListener('click', getJoke);
 
 function logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('id_token');
     updateUI();
-    // Optional: Call token revocation endpoint if your AS supports it and you want to invalidate server-side session/token
-    // Example:
-    // const token = localStorage.getItem('access_token'); // or refresh_token
-    // if (token) {
-    //   fetch(`${AUTH_SERVER_URL}/oauth2/revoke`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    //     body: new URLSearchParams({
-    //       token: token,
-    //       client_id: CLIENT_ID,
-    //       // client_secret: 'your_secret' // if your client auth method for revocation needs it
-    //     })
-    //   }).then(() => console.log('Token revoked')).catch(err => console.error('Revocation error', err));
-    // }
 }
 
-
 function updateUI() {
+    console.log("Running updateUI");
     const accessToken = localStorage.getItem('access_token');
     if (accessToken) {
+        loginButton.style.display = 'none';
+        document.getElementById('callQuote').style.display = 'inline-block';
+        document.getElementById('callJoke').style.display = 'inline-block';
+        logoutButton.style.display = 'inline-block';
         statusEl.textContent = 'Logged in.';
         accessTokenEl.textContent = accessToken;
-        loginButton.style.display = 'none';
-        callApiButton.style.display = 'inline-block';
-        logoutButton.style.display = 'inline-block';
 
-        // Optionally decode and display ID token claims
         const idToken = localStorage.getItem('id_token');
         if (idToken) {
             try {
-                const payload = JSON.parse(atob(idToken.split('.')[1])); // Decode base64url
+                const payload = JSON.parse(atob(idToken.split('.')[1]));
                 console.log("ID Token Payload:", payload);
                 statusEl.innerHTML += `<br>User (from ID Token sub): ${payload.sub}`;
             } catch (e) {
                 console.error("Error decoding ID token", e);
             }
         }
-
     } else {
+        loginButton.style.display = 'inline-block';
+        document.getElementById('callQuote').style.display = 'none';
+        document.getElementById('callJoke').style.display = 'none';
+        logoutButton.style.display = 'none';
         statusEl.textContent = 'Not logged in.';
         accessTokenEl.textContent = 'N/A';
         apiResponseEl.textContent = 'N/A';
-        loginButton.style.display = 'inline-block';
-        callApiButton.style.display = 'none';
-        logoutButton.style.display = 'none';
     }
 }
 
-// Make handleCallback globally accessible for callback.html
 window.handleCallback = handleCallback;

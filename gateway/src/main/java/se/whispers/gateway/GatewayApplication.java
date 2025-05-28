@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -20,27 +21,19 @@ public class GatewayApplication {
         SpringApplication.run(GatewayApplication.class, args);
     }
 
-    //    @Bean
-//    RouterFunction<ServerResponse> routes() {
-//        return RouterFunctions.route()
-//                // Resource Server routes
-//                .GET("/api/**", HandlerFunctions.http())
-//                .before(BeforeFilterFunctions.uri("http://resourceserver:8080"))
-//                // Joke Service routes
-//                .GET("/jokes/**", HandlerFunctions.http())
-//                .before(BeforeFilterFunctions.uri("http://jokeservice:8082"))
-//                // Quote Service routes
-//                .GET("/quotes/**", HandlerFunctions.http())
-//                .before(BeforeFilterFunctions.uri("http://quoteservice:8083"))
-//                .build();
-//    }
+
+    //configures the security filter chain for the gateway application
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) //allows requests from the frontend(7000)
+                .csrf(csrf -> csrf.disable()) //disables CSRF protection as it's not needed for stateless APIs
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/**").authenticated() //requires authentication for API requests
                         .anyRequest().permitAll()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(Customizer.withDefaults()) //configures JWT authentication for the resource server
                 )
                 .build();
     }
@@ -50,7 +43,7 @@ public class GatewayApplication {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:7000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

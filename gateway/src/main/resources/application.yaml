@@ -1,7 +1,13 @@
 spring:
   application:
     name: gateway
-gatew
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://authservice:9000
+          jwk-set-uri: http://authservice:9000/oauth2/jwks
+
   cloud:
     gateway:
       mvc:
