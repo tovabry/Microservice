@@ -1,7 +1,7 @@
 const AUTH_SERVER_URL = 'http://localhost:9000';
 const RESOURCE_SERVER_URL = 'http://localhost:8080'; // Your resource server
 const CLIENT_ID = 'spa-client-id'; // Must match the client ID in Spring Boot
-const REDIRECT_URI = 'http://localhost:8888/callback.html'; // SPA's callback
+const REDIRECT_URI = 'http://localhost:7000/callback.html'; // SPA's callback
 const SCOPES = 'openid read_resource'; // Request 'openid' for ID token, 'read_resource' for your API
 
 // Helper function to generate a random string for code_verifier and state

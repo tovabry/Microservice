@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OAuth2 Callback</title>
+</head>
+<body>
+Processing login...
+<script src="app.js"></script>
+<script>
+    // This script will be executed when callback.html is loaded
+    // app.js should contain handleCallback()
+    window.onload = () => {
+        if (typeof handleCallback === "function") {
+            handleCallback();
+        } else {
+            document.body.innerText = "Error: app.js or handleCallback function not loaded.";
+        }
+    };
+</script>
+</body>
+</html>
