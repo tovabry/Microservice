@@ -2,7 +2,7 @@ param (
     [switch]$p
 )
 
-$projects = @("authservice", "gateway", "resourceserver", "quoteservice", "jokeservice", "spa")
+$projects = @("authservice", "gateway", "quoteservice", "jokeservice", "spa")
 
 if ($p) {
     Write-Host "Running in parallel..."

@@ -13,14 +13,14 @@ spring:
       mvc:
         routes:
           - id: joke-route
-            uri: http://jokeservice:8082/
+            uri: lb://jokeservice
             predicates:
-              - Path=/api/jokes/**
+              - Path=/api/jokes/**,/actuator/**
             filters:
               - RewritePath=/api/jokes/?(?<segment>.*), /$\{segment}
           - id: quote-route
-            uri: http://quoteservice:8083/
+            uri: lb://quoteservice
             predicates:
-              - Path=/api/quotes/**
+              - Path=/api/quotes/**,/actuator/**
             filters:
               - RewritePath=/api/quotes/?(?<segment>.*), /$\{segment}

@@ -29,6 +29,7 @@ public class GatewayApplication {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) //allows requests from the frontend(7000)
                 .csrf(csrf -> csrf.disable()) //disables CSRF protection as it's not needed for stateless APIs
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").permitAll() //allows access to actuator endpoints without authentication
                         .requestMatchers("/api/**").authenticated() //requires authentication for API requests
                         .anyRequest().permitAll()
                 )

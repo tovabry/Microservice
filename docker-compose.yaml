@@ -39,7 +39,18 @@ services:
     networks:
       - microservices-network
     environment:
-        - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker
+    deploy:
+        replicas: 2
+
+  consul:
+    image: hashicorp/consul
+    ports:
+      - "8500:8500"
+    command: [ "consul", "agent", "-server", "-dev", "-bootstrap", "-ui", "-client=0.0.0.0" ]
+    networks:
+      - microservices-network
+
 
 networks:
   microservices-network:

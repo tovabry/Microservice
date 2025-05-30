@@ -21,8 +21,8 @@ public class JokeserviceApplication {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/jokes/public").permitAll()
-                        .requestMatchers("/jokes/private").hasAuthority("SCOPE_read_resource")
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/jokes/random").hasAuthority("SCOPE_read_resource")
                         .anyRequest().authenticated()
                 )
                 //turn on resource server that looks for JWT tokens, with default configuration

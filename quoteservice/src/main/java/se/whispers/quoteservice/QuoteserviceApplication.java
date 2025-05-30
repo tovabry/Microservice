@@ -21,6 +21,7 @@ public class QuoteserviceApplication {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("quotes/random").hasAuthority("SCOPE_read_resource")
                         .anyRequest().authenticated()
                 )
